@@ -12,6 +12,25 @@ class Author(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Add validators 
+    @validates('name')
+    def validate_name(self, key, name):
+        if not name:
+            raise ValueError('name is required')
+    
+    # Check for uniqueness in the database
+        if db.session.query(Author).filter_by(name=name).first():
+            raise ValueError('name must be unique')
+        
+        return name
+        
+    # Check if phone number is exactly 10 digits
+    @validates('phone_number')
+    def validate_phone_number(self, key, phone_number):
+        if not phone_number.isdigit() or len(phone_number) != 10:
+            raise ValueError('phone number must be exactly 10 digits')
+        
+        return phone_number
+
 
     def __repr__(self):
         return f'Author(id={self.id}, name={self.name})'
@@ -28,7 +47,36 @@ class Post(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Add validators  
-
+    @validates('title')
+    def validate_title(self, key, title):
+        if not title:
+            raise ValueError('title is required')
+        
+        required_phrases = ["Won't Believe", "Secret", "Top", "Guess"]
+        if not any(phrase in title for phrase in required_phrases):
+            raise ValueError('title must contain "Won\'t Believe", "Secret", "Top", or "Guess"')
+        
+        return title
+    
+    
+    @validates('content')
+    def validate_content(self, key, content):
+        if content and len(content) < 250:
+            raise ValueError('content must be at least 250 characters')
+        return content
+    
+    @validates('summary')
+    def validate_summary(self, key, summary):
+        if summary and len(summary) > 250:
+            raise ValueError('summary must be at below 250 characters')
+        return summary
+    
+    @validates('category')
+    def validate_category(self, key, category):
+        if category not in ['Fiction', 'Non-Fiction']:
+            raise ValueError('category must be Fiction or Non-Fiction')
+        return category
+    
 
     def __repr__(self):
         return f'Post(id={self.id}, title={self.title} content={self.content}, summary={self.summary})'
